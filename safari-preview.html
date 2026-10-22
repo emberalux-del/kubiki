@@ -3,10 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="color-scheme" content="dark">
-<meta name="theme-color" content="#000000">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="color-scheme" content="light dark">
 <title>Кубики удачи</title>
 
 
@@ -74,6 +71,14 @@ button,a.btn,button:hover,button:active,a.btn:active{box-shadow:none!important;f
 .die-choice,.die-choice:hover,.die-choice:active{background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none!important}
 .badge{background:rgba(255,255,255,.045);font-weight:450;color:#aaa}.sheet-close{background:rgba(255,255,255,.065)}
 
+
+/* Bordeaux light rises as an open half ring from below the scene. */
+body:before,[data-theme=dark] body:before{background:radial-gradient(ellipse 95% 48% at 50% 112%,#6c1d3680 0%,#3e122640 42%,transparent 74%);}
+.stage:before{content:'';position:absolute;left:-13%;right:-13%;height:82%;bottom:-40%;border-radius:50%;background:radial-gradient(ellipse at 50% 42%,transparent 40%,#a53b5528 52%,#76223b18 62%,transparent 74%);filter:blur(15px);pointer-events:none;z-index:-1;}
+#secondaryBtn{background:linear-gradient(130deg,#ffffff13,#ffffff07);backdrop-filter:blur(24px) saturate(130%);-webkit-backdrop-filter:blur(24px) saturate(130%);border-radius:22px;padding:14px 23px;color:#e0d9dc;}
+#dogScene{position:absolute;inset:auto;left:auto;top:auto;right:5%;bottom:0;width:108px;height:100px;pointer-events:none;}
+@media(max-height:670px){#dogScene{width:86px;height:80px;bottom:-5px;right:3%}}
+body:not(.keyboard-nav) button:focus-visible{outline:none}#dogScene{width:120px;height:111px}@media(max-height:670px){#dogScene{width:86px;height:80px}}
 </style>
 </head>
 <body>
@@ -148,6 +153,7 @@ button,a.btn,button:hover,button:active,a.btn:active{box-shadow:none!important;f
 
 <script>
 /* A lightweight, short-lived silver snow trail follows mouse and touch input. */
+document.addEventListener('keydown',e=>{if(e.key==='Tab')document.body.classList.add('keyboard-nav')});document.addEventListener('pointerdown',()=>document.body.classList.remove('keyboard-nav'),{passive:true});
 (function initSnowTrail(){
  const layer=document.createElement('canvas');layer.id='snowTrail';layer.setAttribute('aria-hidden','true');document.body.appendChild(layer);
  const ctx=layer.getContext('2d'),reduced=matchMedia('(prefers-reduced-motion: reduce)');
@@ -188,8 +194,8 @@ try{await document.fonts.load('600 64px AppInter');}catch(e){}
 /* ======================== НАСТРОЙКИ ======================== */
 const CONFIG = {
   NOTIFY_ENDPOINT: '', // HTTPS backend: validates Telegram initData, stores the result and sends the notification.
-  BOT_USERNAME: 'amandice2026_bot',
-  OWNER_CHAT_ID: '1940913266',   // сюда приходят уведомления
+  BOT_USERNAME: '',
+  OWNER_CHAT_ID: '',   // сюда приходят уведомления
   OWNER_NAME: 'Лапунька',            // как подписать «… уже знает о выигрыше»
   PLAYER_IDS: [],                // ID супруги, например [7012345678]; пусто — может играть любой
   TIMEZONE: 'Europe/Moscow',
@@ -198,8 +204,8 @@ const CONFIG = {
 };
 /* =========================================================== */
 
-const preview = true;
-const STORE_KEY = preview ? 'dice_safari_preview_v1' : 'dice_budget_v1';
+const preview = true; // Dedicated Safari preview; isolated test budget.
+const STORE_KEY = preview ? 'dice_local_budget_v1' : 'dice_budget_v1';
 let testDate = preview ? localStorage.getItem('dice_local_date') : null;
 let game = null, demoActive = false;
 const tg = window.Telegram ? window.Telegram.WebApp : null;
@@ -439,7 +445,7 @@ function characterMask(c,x,y,height,tease=false,phase=0){
  }
  if(!tease){
   // One smooth lift from a resting pose to palms at shoulder level; no finger waving.
-  const hy=152-55*ease,hx=43+20*ease,ey=136-12*ease;
+  const hy=151-47*ease,hx=41+13*ease,ey=135-7*ease;
   line('#c5c5c5',12,[[-24,112],[-43,ey],[-hx,hy+5]]);line('#dedede',12,[[24,112],[43,ey],[hx,hy+5]]);
   line('#b4b4b4',2,[[-26,112],[-32,118]]);line('#aaa',2,[[26,112],[32,118]]);
   palm(-hx,hy,-1);palm(hx,hy,1);
@@ -459,32 +465,30 @@ function characterMask(c,x,y,height,tease=false,phase=0){
   box(22,-2,7,6,2.8,'#c2c2c2');line('#858585',1.6,[[6,6],[23,5]]);line('#aaa',1,[[12,-3],[12,3]]);
   c.restore();
  }
- // Reference-inspired facial proportions: a longer oval, quiet eyes and a tidy close beard.
- const skin=c.createRadialGradient(-11,40,3,0,62,51);skin.addColorStop(0,'#f2f2f2');skin.addColorStop(.62,'#d9d9d9');skin.addColorStop(1,'#a6a6a6');
- ellipse(-33,59,4.5,8.5,'#aaa');ellipse(33,59,4.5,8.5,'#c3c3c3');
- fill(skin,()=>{c.moveTo(-30,30);c.quadraticCurveTo(-34,42,-33,61);c.quadraticCurveTo(-31,80,-23,89);c.quadraticCurveTo(-13,102,0,103);c.quadraticCurveTo(13,102,23,89);c.quadraticCurveTo(31,80,33,61);c.quadraticCurveTo(34,42,30,30);c.quadraticCurveTo(0,13,-30,30);c.closePath();});
- // Beard follows the cheeks and rounds at the chin, as in the reference.
- const beard=c.createLinearGradient(-26,66,23,101);beard.addColorStop(0,'#777');beard.addColorStop(.48,'#666');beard.addColorStop(1,'#848484');
- fill(beard,()=>{c.moveTo(-32,57);c.quadraticCurveTo(-29,70,-23,73);c.quadraticCurveTo(-17,77,-12,74);c.quadraticCurveTo(-6,70,0,73);c.quadraticCurveTo(6,70,12,74);c.quadraticCurveTo(17,77,23,73);c.quadraticCurveTo(29,70,32,57);c.lineTo(28,82);c.quadraticCurveTo(18,102,0,103);c.quadraticCurveTo(-18,102,-28,82);c.closePath();});
- line('#929292',1,[[-26,77],[-21,88],[-12,95]]);line('#999',1,[[26,77],[21,88],[12,95]]);
- // Calm almond eyes rather than large cartoon circles.
- fill('#e4e4e4',()=>{c.moveTo(-24,53);c.quadraticCurveTo(-16,46,-8,53);c.quadraticCurveTo(-16,58,-24,53);c.closePath();});
- fill('#ececec',()=>{c.moveTo(8,53);c.quadraticCurveTo(16,46,24,53);c.quadraticCurveTo(16,58,8,53);c.closePath();});
- ellipse(-16,52,2.6,3.3,'#4a4a4a');ellipse(16,52,2.6,3.3,'#4a4a4a');ellipse(-16.7,51.1,.85,.85,'#f8f8f8');ellipse(15.3,51.1,.85,.85,'#f8f8f8');
- line('#7b7b7b',1.5,[[-24,52],[-19,49],[-14,49],[-8,52]]);line('#7b7b7b',1.5,[[8,52],[14,49],[19,49],[24,52]]);
- // Substantial black rectangular frames, softened at the lower corners.
- c.strokeStyle='#434343';c.lineWidth=3.3;c.beginPath();
- c.moveTo(-30,44);c.quadraticCurveTo(-18,42,-3,45);c.lineTo(-5,59);c.quadraticCurveTo(-15,64,-26,60);c.quadraticCurveTo(-29,58,-30,44);
- c.moveTo(30,44);c.quadraticCurveTo(18,42,3,45);c.lineTo(5,59);c.quadraticCurveTo(15,64,26,60);c.quadraticCurveTo(29,58,30,44);c.stroke();
- line('#434343',3,[[-3,47],[3,47]]);line('#555',2.2,[[-31,45],[-34,43]]);line('#555',2.2,[[31,45],[34,43]]);
- line('#6f6f6f',3,[[-26,38],[-18,36],[-10,38]]);line('#6f6f6f',3,[[10,38],[18,36],[26,38]]);
- // Broad, restrained nose and a slight closed smile; no photographic texture.
- line('#aaa',1.4,[[-1,54],[-3,65],[-1,68]]);line('#b2b2b2',1.5,[[-7,68],[-3,70],[3,70],[7,68]]);
- ellipse(-22,67,3.2,1,'#c4c4c4');ellipse(22,67,3.2,1,'#ccc');
- fill('#a9a9a9',()=>{c.moveTo(-10,78);c.quadraticCurveTo(0,74,10,78);c.quadraticCurveTo(9,88,0,89);c.quadraticCurveTo(-9,88,-10,78);c.closePath();});
- fill('#595959',()=>{c.moveTo(-13,76);c.quadraticCurveTo(-6,70,0,74);c.quadraticCurveTo(6,70,13,76);c.quadraticCurveTo(7,79,0,77);c.quadraticCurveTo(-7,79,-13,76);c.closePath();});
- line('#737373',1.6,[[-9,80],[-4,82],[0,82.5],[4,82],[9,80]]);
- line('#d1d1d1',1,[[-5,85],[0,86],[5,85]]);
+ // Symmetric, softly modeled face: one axis for eyes, frames, nose and smile.
+ const skin=c.createRadialGradient(-9,43,3,0,61,45);skin.addColorStop(0,'#eee');skin.addColorStop(.72,'#c8c8c8');skin.addColorStop(1,'#a4a4a4');
+ ellipse(-31,58,4,8,'#aaa');ellipse(31,58,4,8,'#aaa');
+ fill(skin,()=>{c.moveTo(-28,29);c.bezierCurveTo(-36,43,-33,70,-26,83);c.bezierCurveTo(-20,95,-9,99,0,99);c.bezierCurveTo(9,99,20,95,26,83);c.bezierCurveTo(33,70,36,43,28,29);c.quadraticCurveTo(0,17,-28,29);c.closePath();});
+ const beard=c.createLinearGradient(0,66,0,100);beard.addColorStop(0,'#666');beard.addColorStop(1,'#898989');
+ fill(beard,()=>{c.moveTo(-31,59);c.quadraticCurveTo(-28,75,-19,77);c.quadraticCurveTo(-9,73,0,75);c.quadraticCurveTo(9,73,19,77);c.quadraticCurveTo(28,75,31,59);c.lineTo(27,83);c.quadraticCurveTo(18,100,0,100);c.quadraticCurveTo(-18,100,-27,83);c.closePath();});
+ // Calm identical eyes; glasses use mirrored rounded rectangles.
+ for(const sign of [-1,1]){
+  c.save();c.scale(sign,1);
+  fill('#dedede',()=>{c.moveTo(7,53);c.quadraticCurveTo(16,47,24,53);c.quadraticCurveTo(16,57,7,53);c.closePath();});
+  ellipse(16,52.5,2.5,2.8,'#555');ellipse(15.3,51.7,.7,.7,'#fff');
+  c.strokeStyle='#484848';c.lineWidth=3.4;c.beginPath();c.roundRect(4,44,25,17,5);c.stroke();
+  line('#555',2.5,[[29,46],[33,44]]);
+  line('#777',2.4,[[9,39],[17,37.8],[25,39]]);
+  c.restore();
+ }
+ line('#484848',3,[[ -4,48],[4,48]]);
+ // Subtle broad nose, lifted cheeks and a restrained friendly smile.
+ c.strokeStyle='#a6a6a6';c.lineWidth=1.5;c.beginPath();c.moveTo(-2,56);c.quadraticCurveTo(-5,65,-4,67);c.quadraticCurveTo(0,70,5,67);c.stroke();
+ ellipse(-22,67,3,1,'#dadada');ellipse(22,67,3,1,'#dadada');
+ ellipse(0,80,12,7,'#b6b6b6');
+ fill('#686868',()=>{c.moveTo(-13,76);c.quadraticCurveTo(-6,71,0,74);c.quadraticCurveTo(6,71,13,76);c.quadraticCurveTo(7,79,0,77);c.quadraticCurveTo(-7,79,-13,76);c.closePath();});
+ c.strokeStyle='#606060';c.lineWidth=1.8;c.beginPath();c.moveTo(-9,80);c.quadraticCurveTo(0,86,9,80);c.stroke();
+ c.strokeStyle='#ddd';c.lineWidth=1.2;c.beginPath();c.moveTo(-6,80.5);c.quadraticCurveTo(0,83.6,6,80.5);c.stroke();
  // Gentle cap crown and brim, consistent with the same rounded drawing style.
  const cap=c.createLinearGradient(-29,0,30,32);cap.addColorStop(0,'#dedede');cap.addColorStop(.5,'#b7b7b7');cap.addColorStop(1,'#777');
  fill(cap,()=>{c.moveTo(-35,31);c.quadraticCurveTo(-36,1,-3,0);c.quadraticCurveTo(30,0,34,31);c.closePath();});
@@ -514,10 +518,54 @@ function drawResultCharacter(tease){
  const tick=now=>{const p=Math.min(1,(now-start)/duration);drawDottedCharacter(canvas,tease,reduced?1:p);if(p<1&&!reduced)characterFrame=requestAnimationFrame(tick);};tick(start);
 }
 
+/* Reference-inspired black-and-tan dog, rendered only as separate particles. */
+function dogMask(c,t){
+ c.clearRect(0,0,180,164);c.save();
+ const snap=Math.pow(Math.max(0,Math.sin(t*Math.PI*2)),14),bob=Math.sin(t*Math.PI*2)*1.4;
+ c.translate(0,-snap*9);
+ const ell=(x,y,rx,ry,col,rot=0)=>{c.fillStyle=col;c.beginPath();c.ellipse(x,y,rx,ry,rot,0,Math.PI*2);c.fill();};
+ const line=(pts,width,col)=>{c.strokeStyle=col;c.lineWidth=width;c.lineCap='round';c.lineJoin='round';c.beginPath();c.moveTo(...pts[0]);pts.slice(1).forEach(p=>c.lineTo(...p));c.stroke();};
+ // Muscular sitting shape, pale chest and paws.
+ ell(97,121,34,32,'#707078');ell(94,124,14,26,'#c1b3a7');
+ line([[73,122],[70,151]],12,'#9c9186');line([[113,122],[116,151]],12,'#9c9186');
+ ell(69,153,11,5,'#c6b6a3');ell(117,153,11,5,'#c6b6a3');
+ line([[124,131],[139,123],[143,113+Math.sin(t*12)*7]],5,'#8f8186');
+ c.save();c.translate(91,78+bob);c.rotate(Math.sin(t*6.283)*.12);
+ // Folded terrier ears and broad, balanced head.
+ ell(0,0,36,33,'#7d7b83');
+ c.fillStyle='#89838b';c.beginPath();c.moveTo(-28,-17);c.lineTo(-44,-39);c.quadraticCurveTo(-51,-6,-31,3);c.fill();
+ c.beginPath();c.moveTo(28,-17);c.lineTo(43,-36);c.quadraticCurveTo(48,-4,31,3);c.fill();
+ line([[-37,-23],[-39,-11],[-31,-6]],4,'#ae969e');line([[36,-22],[38,-10],[31,-6]],4,'#ae969e');
+ ell(-17,-11,7,4,'#d9c7ad',-.2);ell(17,-11,7,4,'#d9c7ad',.2);
+ ell(-17,0,6.8,7.4,'#ded8d1');ell(17,0,6.8,7.4,'#ded8d1');
+ ell(-16,-1,4.2,5,'#3f3e46');ell(16,-1,4.2,5,'#3f3e46');ell(-17.2,-2.5,1.6,1.6,'#fff');ell(14.8,-2.5,1.6,1.6,'#fff');
+ ell(-10,17,15,11,'#c4b9a9');ell(10,17,15,11,'#c4b9a9');
+ // Mouth briefly opens toward the fly, then closes.
+ ell(0,25,12,3+snap*8,'#44414a');if(snap>.25)ell(0,29,6,3,'#c49caa');
+ ell(0,11,10,6,'#49464f');ell(-3,9,3,1.2,'#a7a0aa');
+ line([[0,17],[0,21],[-8,24]],1.5,'#6e6269');line([[0,21],[8,24]],1.5,'#6e6269');
+ c.restore();c.restore();
+ const fx=88+Math.cos(t*6.283)*38,fy=33+Math.sin(t*12.566)*8;
+ ell(fx-3,fy-3,3.5,2,'#c8c8d2',-.4);ell(fx+3,fy-3,3.5,2,'#c8c8d2',.4);ell(fx,fy,2,2.7,'#fff');
+}
+function initDog(stage){
+ const canvas=document.createElement('canvas');canvas.id='dogScene';canvas.width=216;canvas.height=200;canvas.setAttribute('aria-label','Точечная собака ловит муху');stage.appendChild(canvas);
+ const ctx=canvas.getContext('2d'),mask=document.createElement('canvas');mask.width=180;mask.height=164;const mc=mask.getContext('2d'),cache=new Map();
+ const reduced=matchMedia('(prefers-reduced-motion: reduce)'),start=performance.now();let raf=0,last=0;
+ function draw(now){raf=0;if(document.hidden)return;if(now-last>55){
+  const index=reduced.matches?0:Math.floor(((now-start)%4200)/4200*48);
+  if(!cache.has(index)){dogMask(mc,index/48);cache.set(index,sampleMask(mask,2.05));}
+  ctx.clearRect(0,0,216,200);ctx.save();ctx.scale(1.2,1.2);cache.get(index).forEach(p=>{ctx.fillStyle=`rgb(${p.color})`;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fill();});ctx.restore();last=now;
+ }if(!reduced.matches)raf=requestAnimationFrame(draw);}
+ document.addEventListener('visibilitychange',()=>{cancelAnimationFrame(raf);if(!document.hidden)raf=requestAnimationFrame(draw);});
+ reduced.addEventListener('change',()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(draw);});raf=requestAnimationFrame(draw);
+}
+
 /* Monochrome point scene. All fonts embedded; character is drawn with code for offline use. */
 let playRoll,sleepDice,resetDice;
 function initTiles(){
  const stage=$('stage'),canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');canvas.setAttribute('aria-hidden','true');stage.appendChild(canvas);
+ initDog(stage);
  const controls=document.createElement('div');controls.className='particle-controls';stage.appendChild(controls);
  const reduced=matchMedia('(prefers-reduced-motion: reduce)');
  let w=0,h=0,mode='idle',anim=null,raf=0,last=0,hiddenAt=0;
@@ -538,7 +586,7 @@ function initTiles(){
   let font=Math.min(w*.165,72);c.fillStyle='#ededed';c.textAlign='center';c.textBaseline='middle';
   const label=prize.kind==='tease'?'Фигушка!':money(prize.amount);
   c.font=`600 ${font}px AppInter,sans-serif`;
-  while(c.measureText(label).width>w*(prize.kind==='tease'?.84:.62)){font-=2;c.font=`600 ${font}px AppInter,sans-serif`;}
+  while(font>10 && c.measureText(label).width>w*(prize.kind==='tease'?.84:.62)){font-=2;c.font=`600 ${font}px AppInter,sans-serif`;}
   const digitsWidth=c.measureText(label).width;
   c.fillText(label,w/2,h*.19);
   if(prize.kind!=='tease'){c.textAlign='left';c.font=`500 ${font*.54}px AppInter,sans-serif`;c.fillStyle='#bdbdbd';c.fillText('₽',w/2+digitsWidth/2+font*.1,h*.19+font*.07);}
@@ -550,7 +598,7 @@ function initTiles(){
   ctx.clearRect(0,0,w,h);ctx.globalAlpha=1;
   if(mode==='sleep'){return;}
   if(mode==='amount'&&anim){const targets=makeTargets(anim.prize,1);targets.forEach(t=>dot(t.x,t.y,t.r,t.color[0],.98));ctx.globalAlpha=1;return;}
-  if(mode==='idle'){points.forEach(p=>{const q=project(p.p,p.i,now);dot(q.x,q.y,p.radius*(1+q.z*.07),p.shade,.95);});}
+  if(mode==='idle'){points.forEach(p=>{const q=project(p.p,p.i,now);const lower=Math.max(0,Math.min(1,(p.p[1]+.15)/1.15));ctx.globalAlpha=.95;ctx.fillStyle=`rgb(${Math.min(255,p.shade+lower*32)},${Math.round(p.shade*(1-lower*.37))},${Math.round(p.shade*(1-lower*.22))})`;ctx.beginPath();ctx.arc(q.x,q.y,p.radius*(1+q.z*.07),0,Math.PI*2);ctx.fill();});}
   else if(anim){
    const t=Math.min(1,(now-anim.start)/anim.duration),out=1-Math.pow(1-Math.min(t/.32,1),2),k=Math.max(0,Math.min(1,(t-.20)/.80)),ease=k*k*(3-2*k);
    anim.particles.forEach(p=>{const x=lerp(p.from.x,p.scatter.x,out),y=lerp(p.from.y,p.scatter.y,out);dot(lerp(x,p.to.x,ease),lerp(y,p.to.y,ease),lerp(p.radius,p.to.r||1,ease),Math.round(lerp(p.shade,p.to.color[0],ease)),.95);});
@@ -610,7 +658,12 @@ function setupLocalTest(){
 }
 
 }
-boot();
+if(location.protocol==='file:'||new URLSearchParams(location.search).get('preview')==='1')boot();
+else{
+ const sdk=document.createElement('script');sdk.src='https://telegram.org/js/telegram-web-app.js';sdk.async=true;
+ let started=false;const run=()=>{if(!started){started=true;boot();}};
+ sdk.onload=run;sdk.onerror=run;document.head.appendChild(sdk);setTimeout(run,3000);
+}
 </script>
 </body>
 <!-- Embedded Inter font license:
