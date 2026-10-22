@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Кубики удачи</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  :root { --bg1:#1a1033; --bg2:#3a1450; --gold:#ffd36b; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; height:100%; overflow:hidden; background:radial-gradient(circle at 50% 30%, var(--bg2), var(--bg1) 70%); color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; user-select:none; }
+  canvas { display:block; position:fixed; inset:0; touch-action:none; }
+  #hud { position:fixed; top:0; left:0; right:0; padding:calc(env(safe-area-inset-top) + 22px) 16px 0; text-align:center; pointer-events:none; z-index:2; }
+  #hud h1 { margin:0; font-size:28px; font-weight:800; letter-spacing:.5px;
+    background:linear-gradient(90deg,#ffd36b,#ff8fd8,#9fd4ff); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  #status { margin:8px 0 0; font-size:16px; opacity:.85; }
+  #result { position:fixed; left:16px; right:16px; bottom:calc(env(safe-area-inset-bottom) + 24px); z-index:2;
+    padding:18px 16px; border-radius:20px; text-align:center; background:rgba(255,255,255,.1);
+    border:1px solid rgba(255,255,255,.18); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    transform:translateY(30px); opacity:0; transition:all .5s ease; pointer-events:none; }
+  #result.show { transform:none; opacity:1; }
+  #result .t { font-size:15px; opacity:.85; }
+  #result .a { font-size:38px; font-weight:900; color:var(--gold); margin:4px 0; text-shadow:0 0 18px rgba(255,211,107,.5); }
+  #result .s { font-size:14px; opacity:.7; }
+</style>
+</head>
+<body>
+<div id="hud"><h1>Кубики удачи</h1><p id="status">Загрузка…</p></div>
+<div id="result"><div class="t" id="rT"></div><div class="a" id="rA"></div><div class="s" id="rS"></div></div>
+
+<script>
+/* ================== НАСТРОЙКИ — ЗАПОЛНИТЬ ================== */
+const CONFIG = {
+  BOT_TOKEN: '8667474126:AAHR6sj2Rs6AvyqmiafkCFvY-AUJOdWCTSo', // бот @amandice2026_bot
+  OWNER_CHAT_ID: '1940913266', // ваш числовой id — сюда приходят уведомления
+  PLAYER_IDS: [],                        // id супруги, например [123456789]; пусто = играть может любой, кто открыл бота
+  TIMEZONE: 'Europe/Moscow',             // «новый день» считается по этому поясу
+  CURRENCY: '₽',
+  // Призы и шансы (weight — относительный вес; сумма весов любая).
+  // Можно неденежный приз: { text: 'Ужин в ресторане', weight: 3 }
+  PRIZES: [
+    { amount: 300,  weight: 30 },
+    { amount: 500,  weight: 25 },
+    { amount: 1000, weight: 20 },
+    { amount: 1500, weight: 12 },
+    { amount: 2000, weight: 8  },
+    { amount: 5000, weight: 5  },
+  ],
+  TEST_MODE: false, // true — можно открыть в обычном браузере и играть без ограничений (уведомления с пометкой [ТЕСТ])
+};
+/* =========================================================== */
+
+const STORE_KEY = 'dice_last_play';
+const tg = window.Telegram ? window.Telegram.WebApp : null;
+const inTg = !!(tg && tg.initData);
+const user = inTg && tg.initDataUnsafe && tg.initDataUnsafe.user ? tg.initDataUnsafe.user : null;
+const isOwner = !!(user && String(user.id) === String(CONFIG.OWNER_CHAT_ID));
+const unlimited = CONFIG.TEST_MODE || isOwner;          // вы сами можете тестировать без ограничения
+const playerName = user ? (user.first_name || 'Игрок') : 'Тест';
+const hasCloud = !!(inTg && tg.CloudStorage && tg.isVersionAtLeast && tg.isVersionAtLeast('6.9'));
+
+if (tg) { try { tg.ready(); tg.expand(); tg.setHeaderColor('#1a1033'); tg.setBackgroundColor('#1a1033'); } catch (e) {} }
+
+const $ = id => document.getElementById(id);
+const setStatus = s => { $('status').textContent = s; };
+function showResult(t, a, s) { $('rT').textContent = t; $('rA').textContent = a; $('rS').textContent = s; $('result').classList.add('show'); }
+const haptic = (kind, v) => { try { kind === 'n' ? tg.HapticFeedback.notificationOccurred(v) : tg.HapticFeedback.impactOccurred(v); } catch (e) {} };
+
+/* ---------- хранилище: облако Telegram (не стирается при очистке телефона) ---------- */
+function storeGet(k) {
+  return new Promise(res => {
+    if (hasCloud) tg.CloudStorage.getItem(k, (err, v) => res(err ? null : (v || null)));
+    else { try { res(localStorage.getItem(k)); } catch (e) { res(null); } }
+  });
+}
+function storeSet(k, v) {
+  return new Promise(res => {
+    if (hasCloud) tg.CloudStorage.setItem(k, v, () => res());
+    else { try { localStorage.setItem(k, v); } catch (e) {} res(); }
+  });
+}
+
+/* ---------- логика призов ---------- */
+function todayKey() {
+  return new Intl.DateTimeFormat('ru-RU', { timeZone: CONFIG.TIMEZONE, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+}
+const fmt = p => p.text ? p.text : p.amount.toLocaleString('ru-RU') + ' ' + CONFIG.CURRENCY;
+function pickWeighted(list) {
+  const total = list.reduce((s, p) => s + p.weight, 0);
+  let r = Math.random() * total;
+  for (const p of list) { r -= p.weight; if (r < 0) return p; }
+  return list[list.length - 1];
+}
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+/* ---------- уведомление владельцу через Bot API ---------- */
+async function notify(text) {
+  if (!CONFIG.BOT_TOKEN || CONFIG.BOT_TOKEN.startsWith('ВСТАВЬТЕ')) return false;
+  const body = new URLSearchParams({ chat_id: String(CONFIG.OWNER_CHAT_ID), text }); // form-urlencoded: без CORS-preflight
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const r = await fetch('https://api.telegram.org/bot' + CONFIG.BOT_TOKEN + '/sendMessage', { method: 'POST', body });
+      if (r.ok) return true;
+    } catch (e) {}
+    await new Promise(r => setTimeout(r, 1500));
+  }
+  return false;
+}
+function buildMessage(prize, day) {
+  const tag = unlimited ? '[ТЕСТ] ' : '';
+  const action = prize.text ? 'Нужно исполнить 😉' : 'Нужно перевести 💸';
+  const idLine = user ? `\n🆔 ID игрока: ${user.id}` : '';
+  return `${tag}🎲 ${playerName} сыграла в «Кубики удачи»\n🎁 Выигрыш: ${fmt(prize)}\n📅 ${day}${idLine}\n\n${action}`;
+}
+
+/* ================== THREE.JS ================== */
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.outputEncoding = THREE.sRGBEncoding;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+const dl = new THREE.DirectionalLight(0xffffff, 0.95); dl.position.set(3, 6, 5); scene.add(dl);
+const pl1 = new THREE.PointLight(0xff66cc, 0.9, 25); pl1.position.set(-5, 2, 4); scene.add(pl1);
+const pl2 = new THREE.PointLight(0x66ccff, 0.7, 25); pl2.position.set(5, -1, 4); scene.add(pl2);
+
+/* звёздный фон из точек */
+const stars = (() => {
+  const n = 900, pos = new Float32Array(n * 3), col = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    pos[i*3] = (Math.random() - .5) * 60; pos[i*3+1] = (Math.random() - .5) * 40; pos[i*3+2] = -8 - Math.random() * 30;
+    const c = new THREE.Color().setHSL(0.75 + Math.random() * 0.25, 0.6, 0.6 + Math.random() * 0.4);
+    col[i*3] = c.r; col[i*3+1] = c.g; col[i*3+2] = c.b;
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  const p = new THREE.Points(g, new THREE.PointsMaterial({ size: 0.12, vertexColors: true, transparent: true, opacity: 0.9 }));
+  scene.add(p); return p;
+})();
+
+/* текстуры граней на canvas */
+function roundRect(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x+r, y); g.arcTo(x+w, y, x+w, y+h, r); g.arcTo(x+w, y+h, x, y+h, r); g.arcTo(x, y+h, x, y, r); g.arcTo(x, y, x+w, y, r); g.closePath(); }
+function makeTex(main, sub, c1, c2) {
+  const c = document.createElement('canvas'); c.width = c.height = 512;
+  const g = c.getContext('2d');
+  const grd = g.createLinearGradient(0, 0, 512, 512); grd.addColorStop(0, c1); grd.addColorStop(1, c2);
+  g.fillStyle = grd; g.fillRect(0, 0, 512, 512);
+  g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 16; roundRect(g, 26, 26, 460, 460, 70); g.stroke();
+  g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.shadowColor = 'rgba(0,0,0,.35)'; g.shadowBlur = 12;
+  let size = 260; g.font = `800 ${size}px -apple-system,Segoe UI,Roboto,sans-serif`;
+  while (g.measureText(main).width > 400 && size > 40) { size -= 8; g.font = `800 ${size}px -apple-system,Segoe UI,Roboto,sans-serif`; }
+  g.fillText(main, 256, sub ? 230 : 262);
+  if (sub) { g.font = '600 58px -apple-system,Segoe UI,Roboto,sans-serif'; g.fillText(sub, 256, 385); }
+  const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; return t;
+}
+const PALETTES = [['#ff5fa2', '#8a2be2'], ['#ffb347', '#ff4e50'], ['#43e0ff', '#3b5bff']];
+const closedTex = PALETTES.map(p => makeTex('?', '', p[0], p[1]));
+const lockedTex = makeTex('⏳', 'завтра', '#555a7a', '#2b2d45');
+
+function setFaces(mesh, tex, dim) {
+  mesh.material.forEach(m => { m.map = tex; m.color.set(dim ? 0x9a9ab0 : 0xffffff); m.needsUpdate = true; });
+}
+
+const geo = new THREE.BoxGeometry(1.6, 1.6, 1.6);
+const dice = [-2.3, 0, 2.3].map((x, i) => {
+  const mats = Array.from({ length: 6 }, () => new THREE.MeshStandardMaterial({ map: closedTex[i], roughness: 0.35, metalness: 0.1 }));
+  const mesh = new THREE.Mesh(geo, mats);
+  mesh.position.x = x; mesh.rotation.set(Math.random() * 3, Math.random() * 3, 0);
+  scene.add(mesh);
+  return { mesh, i, state: 'idle', t0: 0, prize: null, targetScale: 1 };
+});
+
+/* конфетти из точек */
+let confetti = null;
+function burst(at) {
+  const n = 380, pos = new Float32Array(n * 3), col = new Float32Array(n * 3), vel = [];
+  for (let i = 0; i < n; i++) {
+    pos[i*3] = at.x; pos[i*3+1] = at.y; pos[i*3+2] = at.z;
+    const a = Math.random() * Math.PI * 2, e = Math.random() * Math.PI - Math.PI / 2, s = 3 + Math.random() * 5;
+    vel.push(new THREE.Vector3(Math.cos(a) * Math.cos(e) * s, Math.abs(Math.sin(e)) * s + 2, Math.sin(a) * Math.cos(e) * s * 0.6));
+    const c = new THREE.Color().setHSL(Math.random(), 0.9, 0.6); col[i*3] = c.r; col[i*3+1] = c.g; col[i*3+2] = c.b;
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  const pts = new THREE.Points(g, new THREE.PointsMaterial({ size: 0.14, vertexColors: true, transparent: true, opacity: 1 }));
+  scene.add(pts);
+  if (confetti) scene.remove(confetti.pts);
+  confetti = { pts, vel, life: 0 };
+}
+
+function resize() {
+  const w = window.innerWidth, h = window.innerHeight;
+  renderer.setSize(w, h); camera.aspect = w / h;
+  const t = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  const z = Math.max(5 / 2 / t, 7.8 / 2 / (t * camera.aspect));
+  camera.position.set(0, 0.4, z); camera.lookAt(0, 0, 0); camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize); resize();
+
+/* анимация */
+const ROLL = 1.7, TWO_PI = Math.PI * 2;
+const TARGET_ROT = new THREE.Vector3(0.38, -0.5, 0);
+let last = performance.now(), winnerLandedAt = 0;
+function nearest(cur, target) { return target + TWO_PI * Math.round((cur - target) / TWO_PI); }
+
+function loop(now) {
+  requestAnimationFrame(loop);
+  const dt = Math.min((now - last) / 1000, 0.05); last = now;
+  const t = now / 1000;
+  stars.rotation.y += dt * 0.01; stars.rotation.x = Math.sin(t * 0.1) * 0.05;
+
+  for (const d of dice) {
+    const m = d.mesh;
+    if (d.state === 'idle' || d.state === 'waiting') {
+      m.position.y = Math.sin(t * 1.6 + d.i * 1.3) * 0.14;
+      m.rotation.x += dt * 0.45; m.rotation.y += dt * 0.65;
+    } else if (d.state === 'rolling') {
+      const p = Math.min((t - d.t0) / ROLL, 1);
+      m.position.y = 2.8 * 4 * p * (1 - p);
+      m.rotation.x += dt * (16 * (1 - p) + 1); m.rotation.y += dt * (12 * (1 - p) + 1); m.rotation.z += dt * 6 * (1 - p);
+      if (p >= 1) land(d, t);
+    } else if (d.state === 'shown') {
+      const k = 1 - Math.exp(-6 * dt);
+      m.rotation.x += (d.tr.x - m.rotation.x) * k; m.rotation.y += (d.tr.y - m.rotation.y) * k; m.rotation.z += (d.tr.z - m.rotation.z) * k;
+      m.position.y += ((Math.sin(t * 1.4 + d.i) * 0.06) - m.position.y) * k;
+    }
+    const s = m.scale.x + (d.targetScale - m.scale.x) * (1 - Math.exp(-5 * dt));
+    m.scale.setScalar(s);
+  }
+
+  // показать, что было в других кубиках
+  if (winnerLandedAt && t - winnerLandedAt > 0.9) {
+    dice.forEach(d => { if (d.state === 'waiting') { reveal(d, true); } });
+    winnerLandedAt = 0;
+  }
+
+  if (confetti) {
+    confetti.life += dt;
+    const a = confetti.pts.geometry.attributes.position;
+    for (let i = 0; i < confetti.vel.length; i++) {
+      const v = confetti.vel[i]; v.y -= 7 * dt; v.multiplyScalar(1 - 0.6 * dt);
+      a.array[i*3] += v.x * dt; a.array[i*3+1] += v.y * dt; a.array[i*3+2] += v.z * dt;
+    }
+    a.needsUpdate = true;
+    confetti.pts.material.opacity = Math.max(0, 1 - confetti.life / 3);
+    if (confetti.life > 3) { scene.remove(confetti.pts); confetti = null; }
+  }
+  renderer.render(scene, camera);
+}
+requestAnimationFrame(loop);
+
+function reveal(d, dim) {
+  const pal = PALETTES[d.i];
+  const p = d.prize;
+  const tex = p.text ? makeTex('🎁', p.text, pal[0], pal[1]) : makeTex(p.amount.toLocaleString('ru-RU'), CONFIG.CURRENCY, pal[0], pal[1]);
+  setFaces(d.mesh, tex, dim);
+  const r = d.mesh.rotation;
+  const ty = TARGET_ROT.y + (d.i - 1) * 0.35; // чуть «смотрят» к центру
+  d.tr = new THREE.Vector3(nearest(r.x, TARGET_ROT.x), nearest(r.y, ty), nearest(r.z, 0));
+  d.state = 'shown';
+}
+function land(d, t) {
+  reveal(d, false);
+  d.targetScale = 1.35;
+  winnerLandedAt = t;
+  burst(d.mesh.position.clone());
+  haptic('n', 'success');
+  showResult('🎉 Ты выиграла!', fmt(d.prize), 'Приходи завтра за новым призом');
+  setStatus('Посмотри, что было в других кубиках');
+}
+
+/* ---------- выбор кубика ---------- */
+let locked = true;
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+renderer.domElement.addEventListener('pointerdown', e => {
+  if (locked) return;
+  ndc.set((e.clientX / window.innerWidth) * 2 - 1, -(e.clientY / window.innerHeight) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  const hit = ray.intersectObjects(dice.map(d => d.mesh))[0];
+  if (hit) pick(dice.find(d => d.mesh === hit.object));
+});
+
+function pick(d) {
+  locked = true;
+  const day = todayKey();
+  // Выигрыш определяется ровно по весам; в два других кубика кладутся другие призы — «для показа»
+  const won = pickWeighted(CONFIG.PRIZES);
+  const rest = shuffle(CONFIG.PRIZES.filter(p => p !== won));
+  let k = 0;
+  dice.forEach(x => { x.prize = (x === d) ? won : (rest[k++ % Math.max(rest.length, 1)] || won); });
+
+  // Сначала фиксируем попытку (чтобы закрытие приложения во время анимации не давало второй шанс)
+  const rec = { d: day, label: fmt(won), notified: false, msg: buildMessage(won, day) };
+  const saved = unlimited ? Promise.resolve() : storeSet(STORE_KEY, JSON.stringify(rec));
+
+  d.state = 'rolling'; d.t0 = performance.now() / 1000; d.targetScale = 1.15;
+  dice.forEach(x => { if (x !== d) { x.state = 'waiting'; x.targetScale = 0.82; } });
+  haptic('i', 'heavy');
+  setStatus('Бросаем…');
+
+  saved.then(() => notify(rec.msg)).then(ok => {
+    if (ok && !unlimited) { rec.notified = true; storeSet(STORE_KEY, JSON.stringify(rec)); }
+  });
+}
+
+/* ---------- старт ---------- */
+(async function init() {
+  if (!inTg && !CONFIG.TEST_MODE) { setStatus('Открой игру через Telegram-бота'); return; }
+  if (user && CONFIG.PLAYER_IDS.length && !isOwner && !CONFIG.PLAYER_IDS.map(String).includes(String(user.id))) {
+    setStatus('Эта игра не для тебя 🙂'); return;
+  }
+  const day = todayKey();
+  let rec = null;
+  try { rec = JSON.parse(await storeGet(STORE_KEY)); } catch (e) {}
+
+  if (rec && rec.d === day && !unlimited) {
+    dice.forEach(d => setFaces(d.mesh, lockedTex, false));
+    setStatus('Сегодня попытка уже использована');
+    showResult('Твой выигрыш сегодня', rec.label, 'Новая попытка — завтра');
+    // если уведомление не дошло (не было сети) — досылаем
+    if (!rec.notified && rec.msg) notify(rec.msg).then(ok => { if (ok) { rec.notified = true; storeSet(STORE_KEY, JSON.stringify(rec)); } });
+    return;
+  }
+  if (rec && rec.d !== day && !rec.notified && rec.msg) notify(rec.msg); // недоставленное за прошлый день
+  setStatus(unlimited ? 'Тестовый режим — выбери кубик' : 'Выбери один кубик');
+  locked = false;
+})();
+</script>
+</body>
