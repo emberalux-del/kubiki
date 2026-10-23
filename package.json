@@ -1,0 +1,15 @@
+{
+  "name": "busenka-lucky-cubes",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {"node": ">=24.0.0 <25"},
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/server.js",
+    "demo": "node --env-file-if-exists=.env scripts/demo.js",
+    "dev": "node scripts/demo.js --preview",
+    "test": "node --test tests/*.test.js",
+    "bot:setup": "node --env-file-if-exists=.env scripts/setup-bot.js",
+    "backup": "node --env-file-if-exists=.env scripts/backup.js"
+  }
+}

@@ -1,0 +1,11 @@
+process.env.DEMO_MODE='true';
+process.env.NODE_ENV='development';
+process.env.DATABASE_PATH='./data/demo.sqlite';
+if(process.argv.includes('--preview'))process.env.PORT='4173';
+const {loadConfig}=await import('../src/config.js');
+const {createApp}=await import('../src/server.js');
+const config=loadConfig();
+if(process.argv.includes('--preview'))config.host='0.0.0.0';
+const app=createApp(config);
+app.server.listen(config.port,config.host,()=>console.log(`Local demo: http://127.0.0.1:${config.port}. No Telegram messages; separate demo database.`));
+for(const signal of ['SIGINT','SIGTERM'])process.once(signal,async()=>{await app.stop();process.exit(0);});

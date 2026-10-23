@@ -1,0 +1,127 @@
+@font-face{font-family:DiceInlineInter;src:url(/inter-latin.woff2) format("woff2");font-weight:100 900;font-style:normal;font-display:swap;unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:DiceInlineInter;src:url(/inter-cyrillic.woff2) format("woff2");font-weight:100 900;font-style:normal;font-display:swap;unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116,U+20BD;}
+#glass-luck-preview{--wine:#aa2449;--text:#f8f4f6;--muted:#ac9da6;position:relative;isolation:isolate;background:#030204;color:var(--text);width:100%;max-width:430px;height:740px;margin:0 auto;border-radius:26px;overflow:hidden;font-family:DiceInlineInter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
+#glass-luck-preview *{box-sizing:border-box}
+#glass-luck-preview button,#glass-luck-preview input{font:inherit;-webkit-tap-highlight-color:transparent}
+#glass-luck-preview button{color:inherit;cursor:pointer;border:0}
+#glass-luck-preview button:focus-visible{outline:2px solid #b96c84;outline-offset:5px}
+#glass-luck-preview [hidden]{display:none!important}
+#glass-luck-preview .luck-app{position:relative;isolation:isolate;height:100%;display:flex;flex-direction:column;align-items:stretch;padding:38px 26px 27px}
+#glass-luck-preview .luck-app:before{content:'';position:absolute;z-index:-2;width:165%;height:65%;left:-32.5%;top:56%;border-radius:50%;border:34px solid #94384e66;filter:blur(24px);pointer-events:none}
+#glass-luck-preview .luck-app:after{content:'';position:absolute;inset:37% -30% -25%;background:radial-gradient(ellipse at 50% 62%,#76273c25,transparent 68%);z-index:-1;pointer-events:none}
+#glass-luck-preview header{text-align:center;flex:none;position:relative;z-index:2}
+#glass-luck-preview .brand{font-size:11px;letter-spacing:.15px;font-weight:450;color:#a4939e;margin:0 0 28px}
+#glass-luck-preview .greeting{font-size:23px;line-height:1.2;letter-spacing:-.7px;font-weight:650;margin:0 0 14px;color:#fff}
+#glass-luck-preview h1{font-size:37px;line-height:1.05;letter-spacing:-1.5px;font-weight:650;margin:0;display:flex;flex-direction:column;align-items:center;gap:1px}
+#glass-luck-preview h1 .choose{color:#fff}#glass-luck-preview h1 .luck{color:#b84363}
+#glass-luck-preview .scene{position:relative;flex:1;min-height:230px;margin:0 -26px;isolation:isolate}
+#glass-luck-preview #glassWorld{display:block;width:100%;height:100%;position:absolute;inset:0;pointer-events:none}
+#glass-luck-preview .choices{position:absolute;top:12%;height:46%;display:grid;grid-template-columns:repeat(3,1fr);width:100%;padding:0 4px;z-index:4}
+#glass-luck-preview .cube-button{background:transparent;border-radius:24px;touch-action:manipulation;padding:0}
+#glass-luck-preview footer{flex:none;text-align:center;display:flex;align-items:center;flex-direction:column;gap:17px;z-index:3}
+#glass-luck-preview .daily{font-size:16px;line-height:1.35;letter-spacing:-.3px;font-weight:450;margin:0;color:#e7dfe3}
+#glass-luck-preview .glass-button{position:relative;isolation:isolate;overflow:hidden;display:inline-grid;place-items:center;min-height:49px;padding:14px 25px;border-radius:23px;background:linear-gradient(120deg,#ffffff0d,#ffffff05 45%,#aa3d5c0c);backdrop-filter:blur(22px) saturate(125%);-webkit-backdrop-filter:blur(22px) saturate(125%);font-size:14px;letter-spacing:-.15px;font-weight:450;transition:transform .25s,background .25s;box-shadow:none;touch-action:manipulation}
+#glass-luck-preview .glass-button:before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 15% 0%,#ffffff13,transparent 60%);z-index:-1}
+#glass-luck-preview .glass-button:after{content:'';position:absolute;inset:-60%;z-index:-1;background:linear-gradient(112deg,transparent 37%,#ffffff0d 49%,transparent 61%);animation:glass-luck-shimmer 8s ease-in-out infinite;pointer-events:none}
+#glass-luck-preview .glass-button:active{transform:scale(.97);background:#ffffff14}
+#glass-luck-preview .glass-button:hover{background-color:#ffffff05}
+#glass-luck-preview .preview-button{position:absolute;right:13px;top:12px;z-index:6;padding:7px 10px;min-height:30px;font-size:10px;border-radius:16px;color:#897983;background:#ffffff03}
+#glass-luck-preview .prize-card{position:absolute;top:22%;left:26px;right:26px;min-height:190px;border-radius:37px;display:flex;align-items:center;justify-content:center;opacity:0;transform:translateY(17px) scale(.96);transition:opacity .6s,transform .8s cubic-bezier(.2,.8,.2,1);padding:30px 8px}
+#glass-luck-preview .glass-panel{isolation:isolate;background:linear-gradient(135deg,#bdaab61a,#ffffff06 40%,#852c4717);backdrop-filter:blur(32px) saturate(130%);-webkit-backdrop-filter:blur(32px) saturate(130%);border:0;box-shadow:inset 1px 1px 9px #e7d0df0d,inset -2px -2px 15px #ad365514}
+#glass-luck-preview .glass-panel:before{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:radial-gradient(ellipse at 4% 0%,#ead9e71a,transparent 55%),radial-gradient(ellipse at 100% 100%,#9d355a14,transparent 45%);z-index:-1}
+#glass-luck-preview .prize-card.visible{opacity:1;transform:none}
+#glass-luck-preview .amount{font-size:clamp(48px,16vw,77px);font-weight:750;line-height:1.2;letter-spacing:-3.8px;white-space:nowrap;color:#b72d53;text-shadow:0 1px 0 #d85674,1px 3px 0 #5a0b26;font-variant-numeric:tabular-nums}
+#glass-luck-preview .amount.tease{font-size:41px;letter-spacing:-1.8px}
+#glass-luck-preview #done{display:none;min-width:116px}
+#glass-luck-preview [data-view=result] #done,#glass-luck-preview [data-view=roll] #done,#glass-luck-preview [data-view=locked] #done{display:inline-grid}
+#glass-luck-preview [data-view=result] #optionsBtn,#glass-luck-preview [data-view=roll] #optionsBtn{display:none}
+#glass-luck-preview [data-view=result] .choices,#glass-luck-preview [data-view=roll] .choices,#glass-luck-preview [data-view=locked] .choices{display:none}
+#glass-luck-preview [data-view=result] h1,#glass-luck-preview [data-view=roll] h1,#glass-luck-preview [data-view=locked] h1{display:none}
+#glass-luck-preview [data-view=result] .greeting,#glass-luck-preview [data-view=roll] .greeting,#glass-luck-preview [data-view=locked] .greeting{margin-top:23px}
+#glass-luck-preview [data-view=locked] #done{display:none}
+#glass-luck-preview .overlay{position:absolute;z-index:20;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;background:#09020863;backdrop-filter:blur(11px);-webkit-backdrop-filter:blur(11px)}
+#glass-luck-preview .popup{position:relative;width:100%;max-height:650px;overflow:auto;padding:31px 25px 24px;border-radius:37px;color:var(--text)}
+#glass-luck-preview .popup h2{font-size:25px;line-height:1.1;font-weight:550;letter-spacing:-.9px;margin:22px 0 24px;max-width:230px}
+#glass-luck-preview .close{position:absolute;top:14px;right:14px;width:39px;height:39px;padding:0;border-radius:50%;background:#ffffff09;display:grid;place-items:center;color:#e8dfe5}
+#glass-luck-preview .close:before,#glass-luck-preview .close:after{content:'';position:absolute;width:14px;height:1.3px;background:currentColor;transform:rotate(45deg);border-radius:1px}
+#glass-luck-preview .close:after{transform:rotate(-45deg)}
+#glass-luck-preview .prizes{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+#glass-luck-preview .prizes div{background:#ffffff05;border-radius:18px;padding:14px 10px;font-size:19px;font-weight:500;letter-spacing:-.6px}
+#glass-luck-preview .prizes .zero{grid-column:1/-1;font-size:15px;padding:12px;color:#bca8b3}
+#glass-luck-preview .popup p{font-size:12px;line-height:1.6;color:#ac99a5;margin:20px 0 0}
+#glass-luck-preview .actions{display:flex;flex-direction:column;align-items:stretch;gap:11px}
+#glass-luck-preview .actions .glass-button{font-size:13px;min-height:45px}
+#glass-luck-preview #testStats{font-size:12px;margin:0 0 20px;color:#bcaab5;line-height:1.7}
+#glass-luck-preview #status{position:absolute;bottom:105px;left:25px;right:25px;text-align:center;font-size:12px;color:#bd8ca3;z-index:8}
+@keyframes glass-luck-shimmer{0%,10%{transform:translateX(-30%)}70%,100%{transform:translateX(30%)}}
+@media(max-width:350px){#glass-luck-preview .luck-app{padding:35px 22px 24px}#glass-luck-preview h1{font-size:34px}#glass-luck-preview .greeting{font-size:22px}#glass-luck-preview .amount{font-size:62px}#glass-luck-preview .prize-card{left:22px;right:22px;min-height:170px}#glass-luck-preview .popup{padding-left:20px;padding-right:20px}#glass-luck-preview .prizes div{font-size:17px}}
+@media(prefers-reduced-motion:reduce){#glass-luck-preview *,#glass-luck-preview *:before,#glass-luck-preview *:after{animation:none!important;transition:none!important}}
+
+#glass-luck-preview .luck-app:before{display:none}
+#glass-luck-preview .halo{position:absolute;z-index:-2;left:-45%;width:190%;height:560px;top:calc(var(--halo-top,450px) - 225px);border:0;filter:none;border-radius:0;background:radial-gradient(ellipse 50% 100% at 50% 100%,transparent 30%,#49142508 39%,#76253e21 47%,#a9415c4d 55%,#b34b686b 60%,#a43b5757 65%,#7f29423b 71%,#51172d1c 79%,#260b1908 87%,transparent 97%);pointer-events:none;transition:top .6s cubic-bezier(.2,.8,.2,1)}
+#glass-luck-preview .halo:after{content:none}
+#glass-luck-preview .luck-app:after{background:radial-gradient(ellipse at 50% 88%,#5d1b2e26,transparent 70%)}
+#glass-luck-preview .choices{padding:0;height:49%;top:10%}
+#glass-luck-preview .shards{position:absolute;inset:0;pointer-events:none;z-index:3;perspective:700px;overflow:visible}
+#glass-luck-preview .shard{position:absolute;left:50%;top:35%;width:var(--w);height:var(--h);opacity:0;will-change:transform,opacity;transform-origin:center;background:linear-gradient(140deg,#eeb5c25e,#a8264b8f 24%,#5b0b22b0 66%,#f6d9e729);backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+#glass-luck-preview .shard:after{content:'';position:absolute;inset:0;background:linear-gradient(125deg,#ffe0e65e,transparent 17%,transparent 78%,#df799447);pointer-events:none}
+
+
+#glass-luck-preview .brand{color:#fff}
+#glass-luck-preview .greeting,#glass-luck-preview .popup h2,#glass-luck-preview .glass-button{color:#fff;opacity:1}
+#glass-luck-preview .popup h2{position:relative;z-index:2;font-weight:600}
+#glass-luck-preview .glass-button{font-weight:500}
+#glass-luck-preview [data-view=roll] h1{display:flex;visibility:hidden}
+#glass-luck-preview [data-view=roll] .greeting{margin-top:0}
+#glass-luck-preview .shard{background-color:transparent;background-repeat:no-repeat;backdrop-filter:none;-webkit-backdrop-filter:none;transform-origin:50% 50%;}
+#glass-luck-preview .shard:after{background:linear-gradient(120deg,#f3ceda21,transparent 8%,transparent 92%,#e4abc026);opacity:.6}
+
+#glass-luck-preview .brand{font-size:14px;font-weight:500;line-height:1.25;letter-spacing:.25px;margin-bottom:22px;color:#f0e8ec}
+#glass-luck-preview .greeting{font-size:31px;line-height:1.15;font-weight:650;letter-spacing:-1px;margin-bottom:17px}
+#glass-luck-preview [data-view=home] .greeting{color:#bd7a90}
+#glass-luck-preview h1{font-size:34px;line-height:1.08;font-weight:550;letter-spacing:-1.05px;gap:0}
+#glass-luck-preview h1 .luck{color:#fff}
+#glass-luck-preview [data-view=roll] h1,#glass-luck-preview [data-view=result] h1,#glass-luck-preview [data-view=locked] h1{display:flex;visibility:hidden}
+#glass-luck-preview [data-view=roll] .greeting,#glass-luck-preview [data-view=result] .greeting,#glass-luck-preview [data-view=locked] .greeting{margin-top:0}
+#glass-luck-preview .popup h2{max-width:none;font-size:23px;line-height:1.25;letter-spacing:-.65px;margin:36px 0 25px;font-weight:600}
+#glass-luck-preview #optionsTitle{white-space:nowrap;text-align:center;font-size:clamp(18px,5.5vw,23px)}
+#glass-luck-preview .glass-button,#glass-luck-preview .close{transition:transform .45s cubic-bezier(.22,1,.36,1),background-color .45s ease,opacity .45s ease}
+#glass-luck-preview .glass-button:after{animation-duration:11s}
+#glass-luck-preview .prize-card{transition:opacity .9s ease,transform 1.15s cubic-bezier(.16,1,.3,1);transform:translateY(24px) scale(.975);will-change:transform,opacity}
+#glass-luck-preview .prize-card.visible{transform:none}
+#glass-luck-preview .halo{transition:top 1.2s cubic-bezier(.22,1,.36,1)}
+#glass-luck-preview .overlay{will-change:opacity}
+#glass-luck-preview .popup{will-change:transform,opacity}
+#glass-luck-preview .overlay.closing{pointer-events:none}
+@media(max-width:350px){#glass-luck-preview .greeting{font-size:29px}#glass-luck-preview h1{font-size:32px}}
+/* One type family, a clear name / invitation / supporting-copy hierarchy. */
+#glass-luck-preview .luck-app{padding:48px 28px 30px}
+#glass-luck-preview header{padding-top:10px}
+#glass-luck-preview .brand{font-size:14px;line-height:20px;font-weight:500;letter-spacing:.15px;color:#e7dce2;margin:0 0 28px}
+#glass-luck-preview .greeting{font-size:40px;line-height:48px;letter-spacing:-1.5px;font-weight:600;margin:0 0 12px}
+#glass-luck-preview [data-view=home] .greeting{color:#b16b84}
+#glass-luck-preview h1{display:block;font-size:26px;line-height:34px;letter-spacing:-.65px;font-weight:450;white-space:nowrap}
+#glass-luck-preview h1 .choose:after{content:' '}
+#glass-luck-preview h1 .choose,#glass-luck-preview h1 .luck{color:#f6eff3}
+#glass-luck-preview [data-view=roll] h1,#glass-luck-preview [data-view=result] h1,#glass-luck-preview [data-view=locked] h1{display:block;visibility:hidden}
+#glass-luck-preview [data-view=roll] .greeting,#glass-luck-preview [data-view=result] .greeting,#glass-luck-preview [data-view=locked] .greeting{font-size:32px;letter-spacing:-1px}
+#glass-luck-preview .scene{margin-left:-28px;margin-right:-28px}
+#glass-luck-preview footer{gap:20px}
+#glass-luck-preview .daily{font-size:14px;line-height:22px;letter-spacing:-.15px;color:#d3c1cb}
+#glass-luck-preview .glass-button{font-size:15px;line-height:22px;font-weight:500;letter-spacing:-.2px;padding:14px 25px;min-height:50px}
+#glass-luck-preview .popup{padding:30px 24px 26px}
+#glass-luck-preview .popup h2{font-size:23px;line-height:30px;font-weight:600;letter-spacing:-.7px;margin:38px 0 26px}
+#glass-luck-preview #optionsTitle{font-size:clamp(18px,5.5vw,23px);line-height:30px}
+#glass-luck-preview .prizes{gap:12px}
+#glass-luck-preview .prizes div{font-size:22px;line-height:28px;letter-spacing:-.55px;padding:15px 8px;font-weight:500;text-align:center;font-variant-numeric:tabular-nums}
+#glass-luck-preview .prizes .zero{font-size:15px;line-height:22px;padding:13px 8px}
+#glass-luck-preview .popup p{font-size:13px;line-height:20px;margin-top:22px;text-align:center;color:#c1a9b6}
+#glass-luck-preview .close{width:44px;height:44px;top:12px;right:12px}
+@media(max-width:350px){#glass-luck-preview .luck-app{padding:44px 22px 28px}#glass-luck-preview .scene{margin-left:-22px;margin-right:-22px}#glass-luck-preview .greeting{font-size:36px;line-height:44px}#glass-luck-preview h1{font-size:24px;line-height:32px}#glass-luck-preview .popup{padding-left:20px;padding-right:20px}#glass-luck-preview .prizes div{font-size:20px}#glass-luck-preview .prizes .zero{font-size:15px}}
+#glass-luck-preview{height:690px}
+#glass-luck-preview footer{gap:18px}
+#glass-luck-preview h1 .choose,#glass-luck-preview h1 .luck,#glass-luck-preview .daily{color:#b16b84}
+#glass-luck-preview h1 .choose,#glass-luck-preview h1 .luck{color:#eee5e9}
+#glass-luck-preview [data-view=roll] .greeting,#glass-luck-preview [data-view=result] .greeting,#glass-luck-preview [data-view=locked] .greeting{color:#eee5e9}
+
+html,body{margin:0;min-height:100%;background:#030204;color:#f8f4f6}body{display:flex;justify-content:center;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}#glass-luck-preview{max-width:430px;border-radius:0;height:max(650px,100svh);height:max(650px,var(--tg-viewport-stable-height,100svh))}#glass-luck-preview .luck-app{padding-top:max(48px,env(safe-area-inset-top));padding-bottom:max(30px,env(safe-area-inset-bottom))}#glass-luck-preview #status{bottom:118px;background:#160d13e8;padding:12px 16px;border-radius:16px;line-height:1.5}#glass-luck-preview #retry{margin:8px auto 0;min-height:40px;padding:8px 18px}#glass-luck-preview .daily{transition:color .4s ease}#glass-luck-preview .cube-button:disabled{cursor:default}#glass-luck-preview .no-webgl .cube-button{height:100px;align-self:center;margin:0 7px;background:linear-gradient(135deg,#5c0e25,#280914);box-shadow:inset 1px 1px 8px #d593a32b;transform:rotate(-8deg)}#glass-luck-preview .no-webgl .cube-button:nth-child(2){transform:rotate(4deg)}#glass-luck-preview .no-webgl #shards{display:none}#glass-luck-preview [data-view=locked] #optionsBtn{display:inline-grid}#glass-luck-preview [data-loading=true] .choices{opacity:.45}#glass-luck-preview [data-demo=true] .brand:after{content:' · демо';color:#b16b84;font-size:12px}@media(min-width:600px){#glass-luck-preview{margin:18px auto;border-radius:26px;height:690px}}@media(max-width:350px){#glass-luck-preview .luck-app{padding-top:max(40px,env(safe-area-inset-top))}}

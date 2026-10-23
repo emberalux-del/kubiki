@@ -1,0 +1,19 @@
+services:
+  gifts:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+      DATABASE_PATH: /app/data/gifts.sqlite
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - gifts-data:/app/data
+      - gifts-backups:/app/backups
+    stop_grace_period: 40s
+volumes:
+  gifts-data:
+  gifts-backups:
